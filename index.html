@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quant Terminal · Metals &amp; Crypto</title>
+<meta name="description" content="Live indicators and statistical price forecasts for copper, gold, silver, Bitcoin and BNB.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%23101827'/><path d='M4 16l5-5 4 4 7-7' stroke='%23f59e0b' stroke-width='2.4' fill='none' stroke-linecap='round'/></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand">
+      <div class="brand-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8M17 7h4v4"/></svg>
+      </div>
+      <div>
+        <div class="brand-row">
+          <h1>Quant Terminal</h1>
+          <span id="status-pill" class="pill"><span class="dot"></span><span id="status-text">Loading…</span></span>
+        </div>
+        <p class="muted small">Metals &amp; Crypto · live indicators and statistical forecasts · <span id="data-updated">—</span></p>
+      </div>
+    </div>
+    <nav id="asset-tabs" class="tabs" role="tablist" aria-label="Select asset"></nav>
+  </div>
+  <div id="ticker" class="ticker wrap" aria-label="Live prices"></div>
+</header>
+
+<main class="wrap">
+  <div id="banner" class="banner hidden"></div>
+
+  <!-- KPI ROW -->
+  <section class="kpis">
+    <article class="card kpi">
+      <div class="kpi-head"><span class="label">Last price</span><span id="kpi-unit" class="tag">—</span></div>
+      <div id="kpi-price" class="kpi-value mono">—</div>
+      <div class="kpi-sub"><span id="kpi-day" class="mono">—</span><span class="muted"> today</span></div>
+      <p id="kpi-price-note" class="note">—</p>
+    </article>
+    <article class="card kpi">
+      <div class="kpi-head"><span class="label">Performance</span><span class="tag">USD</span></div>
+      <div class="perf-grid" id="kpi-perf"></div>
+      <p id="kpi-range" class="note">—</p>
+    </article>
+    <article class="card kpi">
+      <div class="kpi-head"><span class="label">Signal score</span><span id="kpi-signal" class="tag">—</span></div>
+      <div class="kpi-value mono"><span id="kpi-score">—</span><span class="muted small"> / 100</span></div>
+      <div class="bar"><div id="kpi-score-bar" class="bar-fill"></div></div>
+      <p class="note">Model median in <span id="kpi-h-label">1M</span>: <strong id="kpi-target" class="mono">—</strong> <span id="kpi-target-chg" class="mono"></span></p>
+    </article>
+    <article class="card kpi">
+      <div class="kpi-head"><span class="label">Risk &amp; driver</span><span id="kpi-dxy" class="tag">r DXY —</span></div>
+      <div class="kpi-value mono"><span id="kpi-vol">—</span><span class="muted small"> ann. vol</span></div>
+      <div class="kpi-sub"><span class="muted">Drawdown from 52w high </span><span id="kpi-dd" class="mono">—</span></div>
+      <p id="kpi-driver" class="note">—</p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <!-- LEFT COLUMN -->
+    <div class="col-main">
+      <article class="card">
+        <div class="card-head">
+          <div>
+            <h2><span id="main-dot" class="dot-lg"></span><span id="main-title">Price &amp; forecast</span></h2>
+            <p id="main-subtitle" class="muted small">Daily closes with moving averages and the model's forecast cone (median, 50% and 80% ranges).</p>
+          </div>
+          <div class="controls">
+            <div class="seg" id="range-seg">
+              <button data-range="90">3M</button><button data-range="182">6M</button><button data-range="365" class="on">1Y</button><button data-range="1095">3Y</button><button data-range="0">All</button>
+            </div>
+            <button id="btn-ma" class="chip on" aria-pressed="true">SMA 50/200</button>
+          </div>
+        </div>
+        <div class="chart-box tall"><canvas id="mainChart"></canvas></div>
+        <div id="forecast-summary" class="summary-row"></div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <div>
+            <h2 id="sub-title">Indicators</h2>
+            <p id="sub-subtitle" class="muted small">—</p>
+          </div>
+          <div class="seg" id="sub-seg">
+            <button data-sub="rsi" class="on">RSI</button><button data-sub="macd">MACD</button><button data-sub="drivers">Drivers</button><button data-sub="corr">Rolling r</button>
+          </div>
+        </div>
+        <div class="chart-box"><canvas id="subChart"></canvas></div>
+        <ul id="driver-notes" class="notes"></ul>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <div>
+            <h2>Correlation matrix</h2>
+            <p class="muted small">Pearson correlation of daily log returns over the last <span id="corr-window-label">90</span> common trading days.</p>
+          </div>
+          <div class="seg" id="corr-seg">
+            <button data-win="30">30d</button><button data-win="90" class="on">90d</button><button data-win="250">1Y</button>
+          </div>
+        </div>
+        <div id="corr-matrix" class="matrix"></div>
+      </article>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <aside class="col-side">
+      <article class="card">
+        <div class="card-head"><div><h2>Prediction engine</h2><p class="muted small">Statistical models fitted on daily history in your browser.</p></div></div>
+
+        <div class="field">
+          <span class="label">Horizon</span>
+          <div class="seg full" id="horizon-seg">
+            <button data-h="w">1 week</button><button data-h="m" class="on">1 month</button><button data-h="q">3 months</button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="label">Model</span>
+          <div class="seg full wrap-seg" id="model-seg">
+            <button data-model="ensemble" class="on">Ensemble</button><button data-model="ridge">Ridge ML</button><button data-model="trend">Trend</button><button data-model="rw">Random walk</button>
+          </div>
+          <p id="model-desc" class="note"></p>
+        </div>
+
+        <div class="target-box">
+          <div class="row-between"><span class="label">Median target</span><span id="m-prob" class="tag">—</span></div>
+          <div id="m-target" class="kpi-value mono">—</div>
+          <table class="mini">
+            <tr><td>Bear case (P10)</td><td id="m-p10" class="mono r">—</td></tr>
+            <tr><td>Likely range (P25–P75)</td><td id="m-iqr" class="mono r">—</td></tr>
+            <tr><td>Bull case (P90)</td><td id="m-p90" class="mono r">—</td></tr>
+          </table>
+        </div>
+
+        <div class="field">
+          <div class="row-between"><span class="label">Walk-forward backtest</span><span id="bt-n" class="muted small"></span></div>
+          <table class="mini" id="bt-table"></table>
+          <p id="bt-verdict" class="note"></p>
+        </div>
+
+        <div class="field">
+          <div class="row-between"><span class="label">Signal score weights</span><button id="btn-reset" class="link">Reset</button></div>
+          <div id="weights"></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><div><h2>Technical readout</h2><p class="muted small" id="tech-sub">—</p></div></div>
+        <table class="mini" id="tech-table"></table>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><div><h2>Watchlist</h2><p class="muted small">Click a row to switch asset.</p></div></div>
+        <table class="watch" id="watchlist">
+          <thead><tr><th>Asset</th><th class="r">Price</th><th class="r">1D</th><th class="r">1M</th><th class="r">Score</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="corr-strip-head"><span class="label">Correlation with <span id="corr-sel" class="mono">—</span></span><span class="muted small">90d returns</span></div>
+        <div id="corr-strip" class="corr-strip"></div>
+      </article>
+    </aside>
+  </section>
+
+  <section class="card disclaimer">
+    <h2>How to read this</h2>
+    <p>Forecasts come from simple statistical models (trend extrapolation, ridge regression on technical features, and a random-walk baseline) fitted to past daily prices. The ranges show how much prices have typically moved, not guarantees. The walk-forward backtest tells you honestly whether a model has beaten "no change" on this asset in the past two years. Markets are driven by news no model can see. <strong>This is an educational tool, not financial advice.</strong></p>
+    <p class="muted small">Data: Yahoo Finance / Stooq daily closes (via <code>data/market.json</code>), live crypto from Binance or CoinGecko, live metal spot from gold-api.com. Copper is the COMEX front-month future in USD per pound.</p>
+  </section>
+</main>
+
+<footer class="wrap footer muted small">Quant Terminal · built with Chart.js · <span id="footer-note"></span></footer>
+
+<script src="vendor/chart.umd.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
